@@ -1,0 +1,33 @@
+name: Build and Deploy to Cloudflare Pages
+run-name: Building talenox web with GitHub Actions 🚀
+# test
+on: [push]
+jobs:
+  Build-talenox-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - if: ${{ steps.yarn-cache.outputs.cache-hit != 'true' }}
+        name: Skipping cache and installing node modules afresh
+        continue-on-error: true
+        run: echo "skipping cache and installing node modules afresh"
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build
+        run: yarn run build
+
+      - name: Test npm
+        run: npm install uuid
